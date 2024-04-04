@@ -6,12 +6,13 @@ BLACK_ROOK = -1
 BLACK_KNIGHT = -2
 NOTHING = 0
 
-printable = {ROOK: '| _ |', KNIGHT: 'i|_|-', NOTHING: '     '}
+printable = {WHITE_ROOK: '| _ i', WHITE_KNIGHT: '-|_|i', BLACK_KNIGHT: 'i|_|-', BLACK_ROOK: 'i _ |', NOTHING: '     '}
 
 class Board:
     def __init__(self):
         self.board = [[BLACK_KNIGHT] * 8] + [[BLACK_ROOK] * 8] + [[NOTHING] * 8 for _ in range(4)] \
             + [[WHITE_ROOK] * 8] + [[WHITE_KNIGHT] * 8]
+        self.current_side = 1
         #self.board = [[printable[1]] * 8] + [[printable[0]] * 8] + [[printable[2]] * 8 for _ in range(4)] + [[printable[0]] * 8] + [[printable[1]] * 8]
     
     def convert_turn(self, turn):
@@ -38,6 +39,34 @@ class Board:
             raise RuntimeError('Empty cell')
         if converted_turn[0] == converted_turn[2] and converted_turn[1] == converted_turn[3]:
             raise RuntimeError('Same cell')
+        if (self.current_side and type_cell < 0) or (-current_side and type_cell > 0):
+            raise RuntimeError('Wrong color')
+        if self.current_side:
+            self.current_side *= -1
+            if type_cell == WHITE_KNIGHT:
+                return self.knights_move(converted_turn)
+            else:
+                return self.rooks_move(converted_turn)
+        else:
+            self.current_side *= -1
+            if type_cell == BLACK_KNIGHT:
+                return self.knights_move(converted_turn)
+            else:
+                return self.rooks_move(converted_turn)
+    
+
+    def after_turn(self, turn):
+        converted_turn = self.convert_turn(turn)
+        result = self.try_make_turn(turn)
+        if result:
+            self.board[converted_turn[2]][converted_turn[3]] = self.board[converted_turn[0]][converted_turn[1]]
+            self.board[converted_turn[0]][converted_turn[1]] = NOTHING
+        else:
+            print('Incorrect turn')
+            #self.after_turn(new_turn)
+
+
+        
         
     # проверка хода:
     # 1. это вообще клетки?
@@ -50,14 +79,28 @@ class Board:
 
     def rooks_move(self, converted_turn):
         type_cell = self.board[converted_turn[0]][converted_turn[1]]
+        else_type_cell = self.board[converted_turn[2]][converted_turn[3]]
+        if type_cell == else_type_cell:
+            return False
         if converted_turn[0] == converted_turn[2] or converted_turn[1] == converted_turn[3]:
-            if (type_cell != self.board[converted_turn[2]][converted_turn[3]]){
-                if ()
-            }
+            if converted_turn[0] == converted_turn[2]:
+                i = converted_turn[1] + 1
+                while i <= converted_turn[3]:
+                    if (self.board[converted_turn[0]][i] != NOTHING):
+                        return False
+            else:
+                i = converted_turn[0] + 1
+                while i <= converted_turn[2]:
+                    if (self.board[i][converted_turn[1]] != NOTHING):
+                        return False
             return True
         return False
         
     def knights_move(self, converted_turn):
+        type_cell = self.board[converted_turn[0]][converted_turn[1]]
+        else_type_cell = self.board[converted_turn[2]][converted_turn[3]]
+        if type_cell == else_type_cell:
+            return False
         step = [abs(converted_turn[0] - converted_turn[2]), abs(converted_turn[1] - converted_turn[3])]
         step.sort()
         if step == [1, 2]:
